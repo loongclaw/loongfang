@@ -1,0 +1,70 @@
+name: GitHub CI
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "src/**"
+      - "examples/**"
+      - "Cargo.toml"
+      - ".github/workflows/**"
+
+env:
+  CARGO_TERM_COLOR: always
+  DATABASE_URL: postgres://loongfang:100п9ƒ4п9@localhost:5432/loongfang
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: loongfang
+          POSTGRES_PASSWORD: 100п9ƒ4п9
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install SQLx-CLI
+        run: |
+          if ! command -v sqlx &> /dev/null; then
+            cargo install sqlx-cli --no-default-features --features native-tls,postgres
+          fi
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..10}; do
+            if pg_isready -h localhost -p 5432 -U loongfang; then
+              echo "PostgreSQL is ready"
+              exit 0
+            fi
+            echo "Waiting for PostgreSQL... ($i/10)"
+            sleep 3
+          done
+          echo "PostgreSQL failed to start"
+          exit 1
+
+      - name: Run migrations
+        run: sqlx migrate run --source ./examples
+
+      - name: Run cargo clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run Rust formatting checks
+        run: cargo fmt --all --check
+
+      - name: Run tests (if any)
+        run: cargo test --all-features

@@ -1,0 +1,49 @@
+[package]
+name = "loongfang"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+description = "简化 axum 及生态的集成！"
+homepage = "https://github.com/loongclaw/loongfang"
+repository = "https://github.com/loongclaw/loongfang"
+readme = "README.md"
+exclude = ["/.github/*", "/examples/*", "/.editorconfig", "/.gitignore"]
+
+[features]
+default = ["postgres", "redis"]
+postgres = ["dep:sqlx", "sqlx?/postgres", "sqlx?/runtime-tokio-rustls"]
+redis = ["dep:redis", "redis?/bb8", "redis?/tokio-comp", "dep:bb8"]
+
+[dependencies]
+anyhow = "1"
+axum = "0.8"
+bb8 = { version = "0.9", optional = true }
+config = "0.15"
+futures-util = "0.3"
+http-body-util = "0.1"
+redis = { version = "1", optional = true }
+serde = { version = "1", features = ["derive"] }
+sqlx = { version = "0.8", optional = true }
+thiserror = "2"
+time = "0.3"
+time-tz = "2"
+tokio = "1"
+tower = "0.5"
+tower-http = { version = "0.6", features = [
+    "compression-full",
+    "cors",
+    "request-id",
+    "trace",
+] }
+tracing = "0.1"
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+validator = { version = "0.20", features = ["derive"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+
+[patch.crates-io]
+tracing = { git = "https://github.com/loongclaw/tracing" }
+tracing-appender = { git = "https://github.com/loongclaw/tracing" }
+tracing-subscriber = { git = "https://github.com/loongclaw/tracing" }
